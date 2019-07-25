@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zy.dao.UserGroupMapper" >
+ <resultMap id="UserGroup" type="com.zy.vo.UserGroup" >
+    <id column="group_id" property="groupId" jdbcType="INTEGER" />
+    <result column="group_name" property="groupName" jdbcType="VARCHAR" />
+    <result column="group_code" property="groupCode" jdbcType="VARCHAR" />
+    <result column="group_desc" property="groupDesc" jdbcType="VARCHAR" />
+    <result column="group_state" property="groupState" jdbcType="CHAR" />
+  </resultMap>
+   <resultMap id="RoleMapp" type="com.zy.vo.Role" >
+    <id column="role_id" property="roleId" jdbcType="INTEGER" />
+    <result column="role_name" property="roleName" jdbcType="VARCHAR" />
+    <result column="role_desc" property="roleDesc" jdbcType="VARCHAR" />
+    <result column="role_code" property="roleCode" jdbcType="VARCHAR" />
+    <result column="role_state" property="roleState" jdbcType="CHAR" />
+    <result column="create_by" property="createBy" jdbcType="INTEGER" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="INTEGER" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <resultMap id="UserGroupRole" type="com.zy.vo.GroupRole" >
+    <id column="goup_role_id" property="goupRoleId" jdbcType="INTEGER" />
+    <result column="group_id" property="groupId" jdbcType="INTEGER" />
+    <result column="role_id" property="roleId" jdbcType="INTEGER" />
+  </resultMap>
+   <sql id="sql_query">
+  			and group_name like concat("%",#{ugroup.groupName},"%")
+	  		<if test="ugroup.groupState!=null">
+	  				and group_state=#{ugroup.groupState}
+	  		</if>
+	  		<if test="page!=null">
+	  					limit #{page.limitIndex},#{page.pageSize}
+	  		</if>
+  </sql>
+    <select id="findusergroup"  parameterType="HashMap"  resultMap="UserGroup"> <!-- 组首页展示 -->
+					select * from User_group
+ 		<where>
+            <include refid="sql_query"></include>
+        </where> 
+   </select>
+	
+	<select id="findgroupname" parameterType="String" resultMap="UserGroup"><!-- 查询组唯一性 -->
+	
+		select *from User_group where group_name=#{groupName}
+	</select>
+	
+	<select id="findgroupCode" parameterType="String" resultMap="UserGroup"><!-- 查code唯一性 -->
+	
+		select *from User_group where group_code=#{groupCode}
+	</select>
+	
+	<insert id="insertgroup" parameterType="UserGroup" ><!-- 添加组 -->
+    insert into user_group
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="groupId != null" >
+        group_id,
+      </if>
+      <if test="groupName != null" >
+        group_name,
+      </if>
+      <if test="groupCode != null" >
+        group_code,
+      </if>
+      <if test="groupDesc != null" >
+        group_desc,
+      </if>
+      <if test="groupState != null" >
+        group_state,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="groupId != null" >
+        #{groupId,jdbcType=INTEGER},
+      </if>
+      <if test="groupName != null" >
+        #{groupName,jdbcType=VARCHAR},
+      </if>
+      <if test="groupCode != null" >
+        #{groupCode,jdbcType=VARCHAR},
+      </if>
+      <if test="groupDesc != null" >
+        #{groupDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="groupState != null" >
+        #{groupState,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+<update id="updategroup" parameterType="UserGroup" ><!-- 修改组 -->
+    update user_group
+    <set >
+      <if test="groupName != null" >
+        group_name = #{groupName,jdbcType=VARCHAR},
+      </if>
+      <if test="groupCode != null" >
+        group_code = #{groupCode,jdbcType=VARCHAR},
+      </if>
+      <if test="groupDesc != null" >
+        group_desc = #{groupDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="groupState != null" >
+        group_state = #{groupState,jdbcType=CHAR},
+      </if>
+    </set>
+    where group_id = #{groupId,jdbcType=INTEGER}
+  </update>
+   <delete id="deletegroup" parameterType="INTEGER" ><!-- 删除组 -->
+    delete from user_group
+    where group_id = #{groupId,jdbcType=INTEGER}
+  </delete>
+  
+    <select id="findRoletype" resultMap="RoleMapp"><!-- //全查角色表 -->
+  			select * from Role
+  </select>
+	<select id="groupRole" parameterType="INTEGER" resultType="String"><!-- 查询组角色 -->
+		select  GROUP_CONCAT(role_id SEPARATOR ',')  from group_role where group_id=#{groupId}
+	</select>
+		<delete id="deletegroupRole" parameterType="Integer"><!-- 删除当前用户角色 -->
+			delete FROM group_role WHERE group_id=#{groupId}	
+	</delete>	
+	<insert id="insertegroupRole" parameterType="HashMap"><!-- 添加用户角色 -->
+				INSERT INTO group_role(role_id,group_id)VALUES(#{roleId},#{groupId})
+	</insert>	
+
+</mapper>
