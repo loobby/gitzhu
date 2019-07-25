@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--  namespace为mapper接口全路径 -->
+
+<mapper namespace="com.zy.dao.ItemsMapp">
+	<select id="sidlogin" parameterType="String" resultType="Student"><!-- 全查学生表 -->
+		select * from student where sid=#{name}
+	</select>
+	<select id="tidlogin" parameterType="String" resultType="Teacher"><!-- 全查老师表 -->
+		select * from teacher where tid=#{name}
+	</select>
+
+<!-- ajax -->
+	<select id="chaname" parameterType="String" resultType="STUdent">
+		select * from student where sname=#{name}
+	</select>
+
+
+
+
+	
+	
+	<!-- 上面是判断登陆的是谁 -->
+	<update id="upspass">
+		update student set skey=#{skey} where sid=#{sid}<!-- 修改学生密码  -->
+	</update>
+	<update id="uptpass">
+		update teacher set tkey=#{tkey} where tid=#{tid}<!-- 修改老师密码 -->
+	</update>
+
+
+
+	<resultMap type="Course" id="CreditTeacher"><!-- 两边联查查选修有哪些 必修有哪些 -->
+		<!-- 关联course字段 -->
+			<id column="cid" property="cid"></id>
+			<result column="tid" property="tid"></result>
+			<result column="cname" property="cname"></result>
+			<result column="ctype" property="ctype"></result>
+			<result column="ccredit" property="ccredit"></result>
+			<result column="cmax" property="cmax"></result>
+			<result column="cnote" property="cnote"></result>
+			<result column="cprecid" property="cprecid"></result>
+			<collection property="teacher" ofType="teacher">
+				<result column="tname" property="tname"></result>
+			</collection>
+	</resultMap>
+	<select id="finCreditTeacher"  parameterType="String"  resultMap="CreditTeacher"><!--普通查必修  -->
+			SELECT c.*,t.tname FROM course c,teacher t
+					WHERE c.tid=t.tid and c.ctype=#{type}
+	</select>
+		<select id="DESCCredit"  parameterType="String"  resultMap="CreditTeacher"><!-- 排序必修 -->
+			SELECT c.*,t.tname FROM course c,teacher t
+					WHERE c.tid=t.tid and c.ctype=#{type} ORDER BY ccredit DESC
+	</select>
+	
+	
+	
+	<select id="findcoursenotnull" parameterType="elect"  resultType="Elect" > <!-- 查该学生是否已经选择了这门课 -->
+			select * from elect  where  sid=#{sid} and cid=#{cid}
+	</select>
+	
+	<update id="updcourse" parameterType="Integer"> <!--学生选择了课程 课程表已选人数加1  -->
+		UPDATE course SET cprecid=cprecid+1 WHERE cid = #{cid}
+	</update>
+		
+	<insert id="insetElect">		<!-- 将学生和课程添加到已经选择的表中 -->
+		INSERT INTO elect(sid,cid)VALUES(#{sid},#{cid})
+	</insert>
+	
+	
+	
+	<!-- 选修界面模糊查找 -->
+	<select id="finddim" parameterType="course" resultMap="CreditTeacher">
+		SELECT c.*,t.tname FROM course c,teacher t
+					WHERE c.tid=t.tid AND c.ctype=#{ctype}  AND cname LIKE #{cname}
+	</select>
+	
+
+	
+	
+	
+	
+	<resultMap type="Course" id="electcourse">
+		<!-- 关联course字段 -->
+			<id column="cid" property="cid"></id>
+			<result column="tid" property="tid"></result>
+			<result column="cname" property="cname"></result>
+			<result column="ctype" property="ctype"></result>
+			<result column="ccredit" property="ccredit"></result>
+			<result column="cmax" property="cmax"></result>
+			<result column="cnote" property="cnote"></result>
+			<result column="cprecid" property="cprecid"></result>
+			<collection property="elect" ofType="elect">
+				<result column="cid" property="cid"></result>
+				<result column="score" property="score"></result>
+			</collection>
+			<collection property="teacher" ofType="teacher">
+				<result column="tname" property="tname"></result>
+			</collection>
+	</resultMap>
+	<select id="electcourse" parameterType="Integer" resultMap="electcourse"><!-- 查学生已经选择的课程 是否开课 -->
+			SELECT c.*,e.*,t.tname fROM course c,elect e,teacher t
+					WHERE e.sid=#{cid} AND e.cid=c.cid and c.tid=t.tid
+	</select>
+	<delete id="Deleteelectives" parameterType="elect"><!-- 删除选择的课程 -->
+			DELETE from elect where sid=#{sid} and cid=#{cid}
+	</delete>
+	
+	<update id="updatecprecid" parameterType="Integer"><!-- 课程表中已选人数减1  -->
+		UPDATE course SET cprecid=cprecid-1 WHERE cid = #{cid}
+	</update>
+	
+	<!-- 上面事已经添加选修的操作 -->
+	
+	<!-- 下面是老师界面的界面  -->
+	
+	<select id="PrimaryCourse" parameterType="Integer" resultType="Course"><!-- 上面事查找老师教授的课 -->
+		select * from Course where tid=#{tid}
+	</select> 
+	
+	
+	<update id="Changethetype" parameterType="Integer"><!-- 老师控制开课 -->
+		UPDATE course SET cnote='已开课'  WHERE cid = #{cid}
+	</update>
+	
+	
+	<resultMap type="Elect" id="ElectStuoo">
+			<id column="sid" property="sid"></id>
+			<result column="cid" property="cid"></result>
+			<result column="score" property="score"></result>
+			<collection property="student" ofType="student">
+				<result column="sname" property="sname"></result>
+				<result column="ssex" property="ssex"></result>
+				<result column="sage" property="sage"></result>
+				<result column="sphone" property="sphone"></result>
+			</collection>
+			<collection property="course" ofType="course">
+				<result column="cid" property="cid"></result>
+				<result column="cname" property="cname"></result>
+				<result column="ctype" property="ctype"></result>
+				<result column="cnote" property="cnote"></result>
+			</collection>
+	</resultMap>
+
+	<select id="electst" parameterType="Integer" resultMap="ElectStuoo"><!-- 查询科目下报名学生详情 -->
+		SELECT e.*,s.*,c.* FROM student s,course c,elect e
+		WHERE e.cid=#{cid} AND e.sid=s.sid AND c.cid=e.cid
+	</select>
+	
+	
+	<update id="upelect">
+		UPDATE elect SET score=#{score} WHERE cid = #{cid} and sid = #{sid}<!-- 打分情况 -->
+	</update>
+	
+	<update id="updatecourse" parameterType="Integer"><!-- 上面是添加学生成绩联动学分 -->
+	UPDATE student SET scredit=(
+					SELECT SUM(c.ccredit)
+						FROM elect e,course c
+					WHERE e.sid=#{sid} AND score >=60 AND e.cid = c.cid
+								)
+		WHERE sid = 10101	
+</update>
+	
+	<!-- 下面是管理员操作 -->
+	
+	<select id="checkstudents" resultType="Student">
+		select * from student
+	</select>
+	<select id="checkteachers" resultType="Teacher">
+		select * from teacher
+	</select>
+	<select id="checkcourse" resultType="Course">
+		select * from course
+	</select>
+	
+	
+	<delete id="Delectstudent" parameterType="Integer">
+		DELETE from student where sid=#{sid}
+	</delete>
+	<delete id="Delectteacher" parameterType="Integer">
+		DELETE from teacher where tid=#{tid}
+	</delete>
+	<delete id="Delectcourse" parameterType="Integer">
+		DELETE from course where cid=#{cid}
+	</delete>
+	
+	
+	<!-- 修改老师学生的账号 -->
+	<select id="upselectstu" parameterType="Integer" resultType="Student">
+		select * from student where sid=#{sid}
+	</select>
+	<select id="upselecttea" parameterType="Integer" resultType="Teacher">
+		select * from Teacher where tid=#{tid}
+	</select>
+	<select id="upselectcou" parameterType="Integer" resultType="Course">
+		select * from course where cid=#{cid}
+	</select>
+	
+	
+	<!-- 修改账号 -->
+	<update id="instrstu">
+		UPDATE student SET sname=#{sname},skey=#{skey},ssex=#{ssex} ,sage=#{sage} ,scredit=#{scredit} ,saddress=#{saddress} ,sphone=#{sphone} ,semail=#{semail}
+		 WHERE sid = #{sid} 
+	</update>
+	<update id="instrtea">
+		UPDATE teacher SET tname=#{tname},tkey=#{tkey},tsex=#{tsex} ,tage=#{tage} ,tphone=#{tphone} ,tmail=#{tmail}
+		 WHERE tid = #{tid} 
+	</update>
+	<update id="instrcou">
+		UPDATE course SET tid=#{tid},cname=#{cname},ctype=#{ctype} ,ccredit=#{ccredit} ,cmax=#{cmax} ,cnote=#{cnote}
+		 WHERE cid = #{cid} 
+	</update>
+	
+	
+	
+	
+	
+	
+	<!-- 添加账号  -->
+	<insert id="insetrstu" parameterType="student">
+			INSERT INTO student(sid,sname,skey,ssex,sage,scredit,saddress,sphone,semail)VALUES(#{sid},#{sname},#{skey},#{ssex},#{sage},#{scredit},#{saddress},#{sphone},#{semail} )
+	</insert>
+	<insert id="insettea" parameterType="teacher">
+			INSERT INTO teacher(tid,tname,tkey,tsex,tage,tphone,tmail)VALUES(#{tid},#{tname},#{tkey},#{tsex},#{tage},#{tphone},#{tmail} )
+	</insert>
+	<insert id="insetcou" parameterType="course">
+			INSERT INTO course(cid,tid,cname,ctype,ccredit,cmax,cnote)VALUES(#{cid},#{tid},#{cname},#{ctype},#{ccredit},#{cmax},#{cnote} )
+	</insert>
+	
+	
+	
+	<!-- 踢出学生 -->
+	<delete id="deldtecourse">
+			DELETE from elect where sid=#{sid} and cid=#{cid}
+	</delete>
+	
+	
+	
+	
+	<!-- 判断可以添加 -->
+	<select id="selectstudent" parameterType="Integer" resultType="Student">
+		select * from student where sid=#{sid}
+	</select>
+	<select id="selectteacher" parameterType="Integer" resultType="Teacher">
+		select * from teacher where tid=#{tid}
+	</select>
+	<select id="selectcourse" parameterType="Integer" resultType="Course">
+		select * from course where cid=#{cid}
+	</select>
+	
+	<select id="selcouursetid" parameterType="Integer" resultType="Course">
+		select * from course where tid=#{tid}
+	</select>
+	
+	
+	
+</mapper> 
